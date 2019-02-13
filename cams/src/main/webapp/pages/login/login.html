@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>登录</title>
+		<link rel="stylesheet" href="../layui/css/layui.css" />
+		<script src="../layui/layui.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<style type="text/css">
+		body {
+			background-color: #393D49;
+		}
+		
+		.formBox {
+			width: 360px;
+			margin: 12% auto;
+			padding: 25px 35px;
+			box-sizing: border-box;
+			background: url(../images/bg-white-lock.png) repeat;
+		}
+		
+		.formTitle {
+			padding: 15px 0 25px;
+			color: #eee;
+			font-size: 22px;
+		}
+		
+		.formBtn {
+			width: 100%;
+		}
+		
+		.formRemember {
+			text-align: right;
+		}
+		
+		.formRemember .layui-form-checkbox[lay-skin=primary] span {
+			color: #eee;
+		}
+	</style>
+
+	<body>
+		<div class="formBox">
+			<h3 class="formTitle">账户登录</h3>
+			<form class="layui-form layui-form-pane" action="">
+				<div class="layui-form-item">
+					<input type="text" class="layui-input" name="userName" required lay-verify="required" placeholder="用户名" />
+				</div>
+				<div class="layui-form-item">
+					<input type="password" class="layui-input" name="userPwd" required lay-verify="required" placeholder="密码" />
+				</div>
+				<div class="layui-form-item">
+					<button class="layui-btn layui-btn-normal formBtn" lay-submit lay-filter="formDemo">登录</button>
+				</div>
+				<!--<div class="layui-form-item formRemember">
+					<input type="checkbox" title="记住我" lay-skin="primary" id="r">
+				</div>-->
+			</form>
+		</div>
+	</body>
+
+</html>
+<script type="text/javascript">
+	//接口地址
+	var initUrl = 'http://localhost:8888';
+
+	layui.use('form', function() {
+		var form = layui.form,
+			$ = layui.$;
+
+		//监听提交
+		form.on('submit(formDemo)', function(data) {
+			var params = data.field;
+			submitHandle($, params);
+			return false;
+		});
+
+		//登录
+		function submitHandle($, params) {
+			var userName = params.userName;
+			$.post(initUrl + '/user/login', params, function(obj) {
+				if(obj.code === 0) {
+					localStorage.userId = obj.data;
+					window.location.href = '../index.html?userName=' + userName;
+					window.event.returnValue = false;
+				} else {
+					layer.msg('账户密码不正确。')
+				}
+			})
+		}
+	});
+</script>

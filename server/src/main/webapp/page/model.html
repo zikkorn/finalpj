@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../layui/css/layui.css" />
+		<script src="../layui/layui.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<style type="text/css">
+		a {
+			color: #3ca2e0;
+		}
+		
+		a:hover {
+			color: #1c7ab3;
+		}
+		
+		.tdLable {
+			text-align: right;
+			background-color: #ddd;
+		}
+		
+		.addTable td {
+			padding: 10px 10px 20px;
+		}
+		
+		.addTable {
+			display: none;
+			padding: 30px;
+		}
+	</style>
+
+	<body>
+
+		<div style="padding: 10px;">
+			<div>
+				<button class="layui-btn layui-btn-normal layui-btn-sm addBtn">
+					<i class="layui-icon">&#xe654;</i>
+					新建
+				</button>
+				<!--<button class="layui-btn layui-btn-danger layui-btn-sm delBtn">
+					<i class="layui-icon">&#xe640;</i>
+					删除
+				</button>-->
+			</div>
+			<table class="layui-hide" id="test" lay-filter="demo"></table>
+
+		</div>
+		<div class="addTable">
+			<form class="layui-form layui-form-pane" action="">
+				<table class="layui-table" style="width: 100%;">
+					<tbody>
+						<tr>
+							<td class="tdLable">
+								<label>流程分类：</label>
+							</td>
+							<td>
+								<select name="category" lay-verify="category" id="select"></select>
+							</td>
+							<td class="tdLable">
+								<label>模型标识：</label>
+							</td>
+							<td>
+								<input type="text" class="layui-input modelBS" />
+							</td>
+						</tr>
+						<tr>
+							<td class="tdLable">
+								<label>模型名称：</label>
+							</td>
+							<td>
+								<input type="text" class="layui-input modelMC" />
+							</td>
+							<td class="tdLable">
+								<label>模型描述：</label>
+							</td>
+							<td>
+								<input type="text" class="layui-input modelMS" />
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="layui-tab-item">
+			<div id="pageDemo"></div>
+		</div>
+
+	</body>
+
+</html>
+<script type="text/html" id="barDemo">
+	<a href="#" lay-event="design">【在线设计】</a>
+	<a href="#" lay-event="deploy">【部署】</a>
+	<!--<a href="#">【导出】</a>-->
+	<a href="#" lay-event="delete">【删除】</a>
+</script>
+<script>
+	//接口地址
+	var initUrl = 'http://localhost:8081/activiti';
+
+	layui.use('table', function() {
+		//表格数据
+		var table = layui.table;
+		table.render({
+			elem: '#test',
+			url: initUrl + '/model/findModelList',
+			method: 'post',
+			page: {
+				limit: 10,
+				limits: [10, 20]
+			},
+			cols: [
+				[{
+					type: 'checkbox'
+				}, {
+					field: 'typeName',
+					title: '流程分类',
+					width: 100
+				}, {
+					field: 'key',
+					title: '模型标识',
+					width: 100
+				}, {
+					field: 'name',
+					title: '模型名称'
+				}, {
+					field: 'createTime',
+					title: '创建时间',
+					width: 160
+				}, {
+					field: 'lastUpdateTime',
+					title: '最后更新时间',
+					width: 160
+				}, {
+					field: 'action',
+					title: '操作',
+					toolbar: '#barDemo'
+				}]
+			]
+		});
+
+		//新建
+		var $ = layui.jquery,
+			layer = layui.layer,
+			form = layui.form;
+		$('.addBtn').click(function() {
+			$.post(initUrl + '/catalog/list', function(obj) {
+				if(obj.code === 0) {
+					var data = obj.data;
+					if(data.length > 0) {
+						$('#select').empty(); //清除下拉框
+						$.each(data, function(index, item) {
+							$("#select").append("<option value=" + item.id + ">" + item.name + "</option>");
+							form.render('select'); //重新渲染
+						});
+					}
+					//打开弹窗
+					layer.open({
+						type: 1,
+						title: '新建模型',
+						area: ['800px', '450px'],
+						maxmin: true,
+						offset: 'auto',
+						content: $('.addTable'),
+						btn: ['确认', '关闭'],
+						yes: function(index) {
+							if($('.modelBS').val() === '') {
+								layer.open({
+									type: 0,
+									content: '模型标识不能为空。',
+								})
+							} else if($('.modelMC').val() === '') {
+								layer.open({
+									type: 0,
+									content: '模块名称不能为空。',
+								})
+							} else if($('.modelMS').val() === '') {
+								layer.open({
+									type: 0,
+									content: '模块描述不能为空。',
+								})
+							} else {
+								var str = $('#select').val(),
+									inpOne = $('.modelBS').val(),
+									inpTwo = $('.modelMC').val(),
+									inpThree = $('.modelMS').val();
+								$.post(initUrl + '/model/create', {
+									catalogId: str,
+									key: inpOne,
+									name: inpTwo,
+									desc: inpThree
+								}, function(obj) {
+									console.log(obj)
+									if(obj.code === 0) {
+										layer.close(index);
+										$('.modelBS').val('');
+										$('.modelMC').val('');
+										$('.modelMS').val('');
+										location.reload();
+									}
+								})
+
+							};
+						},
+						btn2: function() {
+							$('.modelBS').val('');
+							$('.modelMC').val('');
+							$('.modelMS').val('');
+						},
+						cancel: function() {
+							$('.modelBS').val('');
+							$('.modelMC').val('');
+							$('.modelMS').val('');
+						}
+					})
+				}
+			})
+		});
+
+		//操作
+		table.on('tool(demo)', function(obj) {
+			var data = obj.data;
+			if(obj.event === 'design') {
+				var thatId = data.id;
+				window.open('../modeler.html?modelId=' + thatId)
+			} else if(obj.event === 'delete') {
+				layer.confirm('确认删除吗？', function(index) {
+					var thatId = data.id;
+					$.post(initUrl + '/model/deleteModel', {
+						id: thatId
+					}, function(data) {
+						if(data.code === 0) {
+							layer.close(index);
+							location.reload();
+						}
+					})
+				});
+			} else if(obj.event === 'deploy') {
+				var thatId = data.id;
+				$.post(initUrl + '/model/deploy/' + thatId, function(data) {
+					if(data.code === 0) {
+						layer.alert('部署成功。')
+					} else {
+						layer.alert(data.msg)
+					}
+				})
+			}
+		})
+	});
+</script>

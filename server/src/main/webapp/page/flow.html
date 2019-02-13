@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../layui/css/layui.css" />
+		<script src="../layui/layui.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<style type="text/css">
+		a {
+			color: #3ca2e0;
+		}
+		
+		a:hover {
+			color: #1c7ab3;
+		}
+		
+		.updataModel {
+			display: none;
+			padding: 30px;
+		}
+	</style>
+
+	<body>
+
+		<div style="padding: 10px;">
+			<div>
+				<button class="layui-btn layui-btn-normal layui-btn-sm updataBtn">
+					<i class="layui-icon">&#xe654;</i>
+					上传流程文件
+				</button>
+			</div>
+			<table class="layui-hide" id="test" lay-filter="demo"></table>
+		</div>
+		<div class="updataModel">
+			<form class="layui-form layui-form-pane" action="">
+				<div class="layui-form-item">
+					<label>流程分类：</label>
+					<div style="margin-top: 3px;">
+						<select name="">
+							<option value="0">常用流程</option>
+							<option value="1">办公流程</option>
+						</select>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label>流程文件：</label>
+					<div style="margin-top: 3px;">
+						<button type="button" class="layui-btn layui-btn-normal" id="test1">
+  							<i class="layui-icon">&#xe67c;</i>上传图片
+						</button>
+					</div>
+					<p style="color: #aaa;">支持文件格式：zip、bar、bpmn、bpmn20.xml</p>
+				</div>
+			</form>
+		</div>
+	</body>
+
+</html>
+<script type="text/html" id="barDemo">
+	{{# if(d.state === 1){ }}
+	<a href="#" lay-event="suspend">【挂起】</a>
+	{{# } }}
+	{{# if(d.state === 2){ }}
+	<a href="#" lay-event="activate">【激活】</a>
+	{{# } }}
+	<a href="#" lay-event="delete">【删除】</a>
+</script>
+<script>
+	//接口地址
+	var initUrl = 'http://localhost:8081/activiti';
+
+	layui.use('table', function() {
+		//表格数据
+		var table = layui.table;
+		table.render({
+			elem: '#test',
+			url: initUrl + '/client/query/processDefList',
+			method: 'post',
+			page: true,
+			cols: [
+				[{
+					type: 'checkbox'
+				}, {
+					field: 'processCatalog',
+					title: '流程分类',
+					width: 100
+				}, {
+					field: 'id',
+					title: '模型标识'
+				}, {
+					field: 'name',
+					title: '模型名称',
+					width: 150
+				}, {
+					field: 'version',
+					title: '流程版本',
+					width: 90
+				}, {
+					field: 'deployTime',
+					title: '部署时间',
+					width: 160
+				}, {
+					field: 'action',
+					title: '操作',
+					toolbar: '#barDemo'
+				}]
+			]
+		});
+
+		//上传流程文件弹窗
+		var $ = layui.jquery,
+			layer = layui.layer;
+		$('.updataBtn').click(function() {
+			layer.open({
+				type: 1,
+				title: '上传流程文件',
+				area: ['800px', '450px'],
+				maxmin: true,
+				offset: 'auto',
+				content: $('.updataModel'),
+				btn: ['确认', '关闭'],
+				yes: function(index) {
+
+				},
+				btn2: function() {
+
+				},
+				cancel: function() {
+
+				}
+			})
+		});
+
+		//操作
+		table.on('tool(demo)', function(obj) {
+			var data = obj.data;
+			if(obj.event === 'suspend') {
+				layer.confirm('确认挂起该流程吗？', function(index) {
+					var thatId = data.id;
+					$.post(initUrl + '/client/suspend/processDef/' + thatId, function(data) {
+						if(data.code === 0) {
+							layer.close(index);
+							location.reload();
+						}
+					})
+				})
+			} else if(obj.event === 'activate') {
+				layer.confirm('确认激活该流程吗？', function(index) {
+					var thatId = data.id;
+					$.post(initUrl + '/client/activate/processDef/' + thatId, function(data) {
+						if(data.code === 0) {
+							layer.close(index);
+							location.reload();
+						}
+					})
+				})
+			} else if(obj.event === 'delete') {
+				layer.confirm('确认删除吗？', function(index) {
+					var thatId = data.id;
+					$.post(initUrl + 'client/activate/processDef/' + thatId, function(data) {
+						if(data.code === 0) {
+							layer.close(index);
+							location.reload();
+						}
+					})
+				});
+			}
+		})
+
+	});
+	//弹窗内部上传功能
+	layui.use('upload', function() {
+		//执行实例
+		var upload = layui.upload;
+		upload.render({
+			elem: '#test1', //绑定元素
+			url: '', //上传接口
+			done: function(res) {
+
+			},
+			error: function() {
+
+			}
+		});
+	});
+</script>

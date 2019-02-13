@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tqy.cams.dao.RzblMapper" >
+
+    <insert id="saveRzApplication" parameterType="com.tqy.cams.bean.RzApplication">
+        insert into rz_application(id,system_name,business_type,manager_dept,develop_dept,application_username,phone,email,create_date,remark)
+        VALUES (#{id},#{systemName},#{businessType},#{managerDept},#{developDept},#{applicationUserName},#{phone},#{email},#{createDate},#{remark})
+    </insert>
+    
+     <insert id="saveCheckRzApplication" parameterType="com.tqy.cams.bean.RzCheckRz">
+        insert into rz_check(check_username,check_date,suggestion,result,application_id)
+        VALUES (#{checkUserName},#{checkDate},#{suggestion},#{result},#{applicationId})
+    </insert>
+    
+    <select id="queryCount">
+    	select count(1) from rz_application where 1=1 
+        <if test="systemName != null and systemName != ''.toString()">
+            and system_name = #{systemName}
+        </if>
+        <if test="managerDept != null and managerDept != ''.toString()">
+            and develop_dept = #{managerDept}
+        </if>
+        <if test="developDept != null and developDept != ''.toString()">
+            and manager_dept = #{developDept}
+        </if>
+    </select>
+    
+    <select id="queryRzAppByCondition" resultType="com.tqy.cams.bean.RzApplication">
+   		select a.id AS "id",
+              a.system_name AS "systemName",
+              a.business_type AS "businessType",
+              a.manager_dept AS "managerDept",
+              a.develop_dept AS "developDept",
+              a.application_username AS "applicationUserName",
+              a.phone,
+              a.email,
+              a.create_date AS "createDate",
+              a.attachment,
+              a.remark,
+              c.result
+        from rz_application a,rz_check c where a.id=c.application_id 
+        <if test="systemName != null and systemName != ''.toString()">
+            and a.system_name = #{systemName}
+        </if>
+        <if test="managerDept != null and managerDept != ''.toString()">
+            and a.develop_dept = #{managerDept}
+        </if>
+        <if test="developDept != null and developDept != ''.toString()">
+            and a.manager_dept = #{developDept}
+        </if>
+        limit #{start},#{end}
+    </select>
+    
+    <select id="getRzApplicationById" parameterType="java.lang.String" resultType="com.tqy.cams.bean.RzApplication">
+        select id AS "id",
+              system_name AS "systemName",
+              business_type AS "businessType",
+              manager_dept AS "managerDept",
+              develop_dept AS "developDept",
+              application_username AS "applicationUserName",
+              phone,
+              email,
+              create_date AS "createDate",
+              attachment,
+              remark
+        from rz_application where id=#{0}
+    </select>
+    
+    <select id="getCheckRzApplicationById" parameterType="java.lang.String" resultType="com.tqy.cams.bean.RzCheckRz">
+        select check_username AS "checkUserName",
+              check_date AS "checkDate",
+              suggestion AS "suggestion",
+              result AS "result",
+              application_id AS "applicationId",
+        from rz_check where application_id=#{0}
+    </select>
+
+    <select id="getMyApplicationByPage" parameterType="java.util.Map" resultType="com.tqy.cams.bean.MyProcInst">
+        select  t1.*,t.user_name AS "startUserName"
+        from `user` t,
+        (
+        <foreach collection="list" separator="union all" item="item" index="idx">
+            select
+            #{item.procInstId,jdbcType=VARCHAR} AS "procInstId",
+            #{item.businessKey,jdbcType=VARCHAR} AS "businessKey",
+            #{item.processDefId,jdbcType=VARCHAR} AS "processDefId",
+            #{item.startTime,jdbcType=TIMESTAMP} AS "startTime",
+            #{item.endTime,jdbcType=TIMESTAMP} AS "endTime",
+            #{item.startUserId,jdbcType=VARCHAR} AS "startUserId",
+            #{item.startActId,jdbcType=VARCHAR} AS "startActId",
+            #{item.endActId,jdbcType=VARCHAR} AS "endActId",
+            #{item.deleteReason,jdbcType=VARCHAR} AS "deleteReason",
+            #{item.name,jdbcType=VARCHAR} AS "name",
+            #{item.formKey,jdbcType=VARCHAR} AS "formKey",
+            #{idx} AS "index"
+            from dual
+        </foreach>
+        ) AS t1
+        where t.user_id = t1.startUserId
+        ORDER BY t1.index
+    </select>
+    
+    <update id="updateRzApplication" parameterType="com.tqy.cams.bean.RzApplication">
+        UPDATE rz_application SET 
+        	 business_type = #{businessType}
+        	,manager_dept = #{managerDept}
+	        ,develop_dept = #{developDept}
+	        ,application_username = #{applicationUserName}
+	        ,phone = #{phone}
+	        ,email = #{email}
+        <if test="remark != null and remark != ''.toString()">
+            ,remark = #{remark}
+        </if>
+        WHERE id = #{id}
+    </update>
+    
+    <update id="updateCheckRzApplication" parameterType="com.tqy.cams.bean.RzApplication">
+        UPDATE rz_check SET 
+        	 check_username = #{checkUserName}
+        	,check_date = #{checkDate}
+        <if test="suggestion != null and suggestion != ''.toString()">
+            ,suggestion = #{suggestion}
+        </if>
+        <if test="result != null and result != ''.toString()">
+            ,result = #{result}
+        </if>
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <select id="getMyTaskByPage" parameterType="java.util.Map" resultType="com.tqy.cams.bean.RzApplication">
+        select
+            task_table.*,
+            t.application_username AS "applicationUserName" 
+        from rz_application t,
+        (
+        <foreach collection="list" separator="union all" item="item" index="idx">
+            select
+                  #{item.procInstId,jdbcType=VARCHAR} AS "procInstId",
+                  #{item.modelName,jdbcType=VARCHAR} AS "modelName",
+                  #{item.activityId,jdbcType=VARCHAR} AS "activityId",
+                  #{item.processDefKey,jdbcType=VARCHAR} AS "processDefKey",
+                  #{item.formKey,jdbcType=VARCHAR} AS "formKey",
+                  #{item.deploymentId,jdbcType=VARCHAR} AS "deploymentId",
+                  #{item.activityName,jdbcType=VARCHAR} AS "activityName",
+                  #{item.startTime,jdbcType=TIMESTAMP} AS "startTime",
+                  #{item.isOverTime,jdbcType=VARCHAR} AS "isOverTime",
+                  #{item.state,jdbcType=VARCHAR} AS "state",
+                  #{item.processDefId,jdbcType=VARCHAR} AS "processDefId",
+                  #{item.taskId,jdbcType=VARCHAR} AS "taskId",
+                  #{item.endTime,jdbcType=TIMESTAMP} AS "endTime",
+                  #{item.assignee,jdbcType=VARCHAR} AS "assignee",
+                  #{item.bussinessKey,jdbcType=VARCHAR} AS "bussinessKey",
+                  #{item.startUserId,jdbcType=VARCHAR} AS "startUserId",
+                  #{item.owner,jdbcType=VARCHAR} AS "owner",
+                  #{item.attorney,jdbcType=VARCHAR} AS "attorney",
+                  #{item.delegater,jdbcType=VARCHAR} AS "delegater",
+                  #{item.delegateId,jdbcType=VARCHAR} AS "delegateId",
+                  #{idx} AS "index"
+            from dual
+        </foreach>
+        ) AS task_table
+        where t.id = task_table.bussinessKey
+        ORDER BY task_table.index
+    </select>
+
+    <select id="queryHiTaskAllByPage" parameterType="java.util.Map" resultType="com.tqy.cams.bean.MyTaskInst">
+        select  t1.*,t.user_name AS "assigneeName",t2.user_name AS "attorneyName"
+        from `user` t,
+        (
+        <foreach collection="list" separator="union all" item="item" index="idx">
+            select #{item.id,jdbcType=VARCHAR} AS "id",
+            #{item.processDefId,jdbcType=VARCHAR} AS "processDefId",
+            #{item.taskName,jdbcType=VARCHAR} AS "taskName",
+            #{item.assignee,jdbcType=VARCHAR} AS "assignee",
+            #{item.startTime,jdbcType=TIMESTAMP} AS "startTime",
+            #{item.endTime,jdbcType=TIMESTAMP} AS "endTime",
+            #{item.startUserId,jdbcType=VARCHAR} AS "startUserId",
+            #{item.duration,jdbcType=VARCHAR} AS "duration",
+            #{item.deleteReason,jdbcType=VARCHAR} AS "deleteReason",
+            #{item.taskResult,jdbcType=VARCHAR} AS "taskResult",
+            #{item.taskResultDesc,jdbcType=VARCHAR} AS "taskResultDesc",
+            #{item.hisTaskTime,jdbcType=VARCHAR} AS "hisTaskTime",
+            #{item.procInstId,jdbcType=VARCHAR} AS "procInstId",
+            #{item.businessKey,jdbcType=VARCHAR} AS "businessKey",
+            #{item.procName,jdbcType=VARCHAR} AS "procName",
+            #{item.attorney,jdbcType=VARCHAR} AS "attorney",
+            #{item.formKey,jdbcType=VARCHAR} AS "formKey",
+            #{idx} AS "index"
+            from dual
+        </foreach>
+        ) AS t1 LEFT JOIN `user` t2 ON t1.attorney = t2.user_id
+        where t.user_id = t1.assignee
+        ORDER BY t1.index
+    </select>
+
+    <select id="queryStartupProcess" parameterType="java.util.Map" resultType="com.activiti.base.entity.IProcess">
+        select  t1.*
+        from (
+        <foreach collection="list" separator="union all" item="item" index="idx">
+            select #{item.id,jdbcType=VARCHAR} AS "id",
+            #{item.name,jdbcType=VARCHAR} AS "name",
+            #{item.deploymentId,jdbcType=VARCHAR} AS "deploymentId",
+            #{item.key,jdbcType=VARCHAR} AS "key",
+            #{item.version,jdbcType=VARCHAR} AS "version",
+            #{item.updateTime,jdbcType=TIMESTAMP} AS "updateTime",
+            #{item.modelId,jdbcType=VARCHAR} AS "modelId",
+            #{item.type,jdbcType=VARCHAR} AS "type",
+            #{item.pid,jdbcType=VARCHAR} AS "pid",
+            #{item.userIds,jdbcType=VARCHAR} AS "userIds",
+            #{item.processCatalog,jdbcType=VARCHAR} AS "processCatalog",
+            #{item.deployTime,jdbcType=VARCHAR} AS "deployTime",
+            #{idx} AS "index"
+            from dual
+        </foreach>
+        ) AS t1
+        ORDER BY t1.index
+    </select>
+
+    <select id="queryDelegateInfoListByPage" parameterType="java.util.List" resultType="com.activiti.base.entity.DelegateInfo">
+        select  t1.*,
+        u.user_name AS "attorneyName"
+        from (
+        <foreach collection="list" separator="union all" item="item" index="idx">
+            select #{item.delegateInfoId,jdbcType=VARCHAR} AS "delegateInfoId",
+            #{item.assignee,jdbcType=VARCHAR} AS "assignee",
+            #{item.attorney,jdbcType=VARCHAR} AS "attorney",
+            #{item.startTime,jdbcType=TIMESTAMP} AS "startTime",
+            #{item.endTime,jdbcType=TIMESTAMP} AS "endTime",
+            #{item.processName,jdbcType=VARCHAR} AS "processName",
+            #{item.processDefId,jdbcType=VARCHAR} AS "processDefId",
+            #{item.activityId,jdbcType=VARCHAR} AS "activityId",
+            #{item.status,jdbcType=VARCHAR} AS "status",
+            #{item.activityName,jdbcType=VARCHAR} AS "activityName",
+            #{idx} AS "index"
+            from dual
+        </foreach>
+        ) AS t1,
+        user u
+        where u.user_id=t1.attorney
+        ORDER BY t1.index
+    </select>
+</mapper>

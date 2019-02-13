@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../layui/css/layui.css" />
+		<script src="../layui/layui.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<style type="text/css">
+		a {
+			color: #3ca2e0;
+		}
+		
+		a:hover {
+			color: #1c7ab3;
+		}
+	</style>
+
+	<body>
+
+		<div style="padding: 10px;">
+			<table class="layui-hide" id="test"></table>
+		</div>
+
+		<script>
+			layui.use('table', function() {
+				var table = layui.table;
+
+				table.render({
+					elem: '#test',
+					cols: [
+						[{
+							type: 'checkbox'
+						}, {
+							field: 'title',
+							title: '实例标题',
+							width: 380
+						}, {
+							field: 'name',
+							title: '流程名称'
+						}, {
+							field: 'state',
+							title: '状态'
+						}, {
+							field: 'people',
+							title: '发起人'
+						}, {
+							field: 'action',
+							title: '操作'
+						}]
+					],
+					data: [{
+						"title": "李云龙在2018-07-09 14:31:31发起流程审批测试流程",
+						"name": "流程审批测试流程",
+						"state": "[已挂起]",
+						"people": "李云龙",
+						"action": `<a href="#">【跟踪】</a>
+									<a href="#">【详情】</a>
+									<a href="#">【作废】</a>`
+					}, {
+						"title": "李云龙在2018-07-09 09:52:52发起报销流程",
+						"name": "报销流程",
+						"state": "[进行中] :财务审批",
+						"people": "李云龙",
+						"action": `<a href="#">【跟踪】</a>
+									<a href="#">【详情】</a>
+									<a href="#">【作废】</a>`
+					}],
+					page: true
+				});
+			});
+		</script>
+
+	</body>
+
+</html>

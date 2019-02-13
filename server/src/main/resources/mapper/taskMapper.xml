@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.activiti.mapper.TaskMapper" >
+
+	<select id="queryTask" parameterType="java.lang.String" resultType="com.activiti.base.entity.ITask">
+		select DISTINCT
+		RES.PROC_INST_ID_ AS "procInstId",
+		PROC.NAME_ AS "modelName",
+		RES.TASK_DEF_KEY_ AS "activityId",
+		PROC.KEY_ AS "processDefKey",
+		FORM_KEY_ AS "formKey",
+		PROC.DEPLOYMENT_ID_ AS "deploymentId",
+		RES.NAME_ AS "activityName",
+		RES.CREATE_TIME_ AS "startTime",
+		'运行' AS "state",
+		PROC.ID_ AS "processDefId",
+		RES.ID_ AS "taskId",
+		RES.ASSIGNEE_ AS "assignee"
+		FROM
+		ACT_RU_TASK RES
+		LEFT JOIN ACT_RU_IDENTITYLINK I ON I.TASK_ID_ = RES.ID_
+		JOIN ACT_RE_PROCDEF PROC ON RES.PROC_DEF_ID_ = PROC.ID_
+		WHERE RES.ASSIGNEE_ = #{userId}
+		OR (
+		RES.ASSIGNEE_ IS NULL
+		AND I.TYPE_ = 'candidate'
+		AND (
+		I.USER_ID_ IN (#{userId}<foreach collection="roleId" item="role" separator="," open=",">
+		#{role}</foreach>)
+		)
+		)
+	</select>
+
+	<select id="queryTaskByPage" parameterType="java.lang.String" resultType="com.activiti.base.entity.ITask">
+		select DISTINCT
+			RES.PROC_INST_ID_ AS "procInstId",
+			PROC.NAME_ AS "modelName",
+			RES.TASK_DEF_KEY_ AS "activityId",
+			PROC.KEY_ AS "processDefKey",
+			FORM_KEY_ AS "formKey",
+			PROC.DEPLOYMENT_ID_ AS "deploymentId",
+			RES.NAME_ AS "activityName",
+			RES.CREATE_TIME_ AS "startTime",
+			'运行' AS "state",
+			PROC.ID_ AS "processDefId",
+			RES.ID_ AS "taskId",
+			RES.ASSIGNEE_ AS "assignee",
+			PRCI.START_USER_ID_ AS "startUserId"
+		FROM
+        ACT_RU_TASK RES
+        LEFT JOIN ACT_RU_IDENTITYLINK I ON I.TASK_ID_ = RES.ID_
+        JOIN ACT_RE_PROCDEF PROC ON RES.PROC_DEF_ID_ = PROC.ID_
+        JOIN ACT_HI_PROCINST PRCI ON RES.PROC_INST_ID_ = PRCI.ID_
+        WHERE RES.ASSIGNEE_ = #{userId}
+        OR (
+        RES.ASSIGNEE_ IS NULL
+        AND I.TYPE_ = 'candidate'
+        AND (
+        I.USER_ID_ IN (#{userId}<foreach collection="roleId" item="role" separator="," open=",">
+		#{role}</foreach>)
+        )
+        )
+	</select>
+
+	<resultMap type="com.activiti.base.entity.ITaskInst" id="ITaskInstMap">
+		<result column="id" property="id"/>
+		<result column="processDefId" property="processDefId"/>
+		<result column="taskName" property="taskName"/>
+		<result column="startTime" property="startTime"/>
+		<result column="endTime" property="endTime"/>
+		<result column="procInstId" property="procInstId"/>
+		<result column="businessKey" property="businessKey"/>
+		<result column="assignee" property="assignee"/>
+		<result column="procName" property="procName"/>
+		<!--<result column="formKey" property="formKey"/>-->
+		<collection property="delegates" ofType="com.activiti.base.entity.DelegateInfo">
+			<result column="attorney" property="attorney"/>
+			<result column="attorneyStatus" property="status"/>
+		</collection>
+	</resultMap>
+	
+	<select id="queryHiTaskAll" parameterType="java.lang.String" resultMap="ITaskInstMap">
+	SELECT DISTINCT
+		HI.ID_ AS "id",
+		HI.PROC_DEF_ID_ AS "processDefId",
+		HI.NAME_ AS "taskName",
+		HI.START_TIME_ AS "startTime",
+		HI.END_TIME_ AS "endTime",
+		pro.id_ as "procInstId",
+		pro.BUSINESS_KEY_ as "businessKey",
+		HI.assignee_ as "assignee",
+		PD.NAME_ AS "procName",
+		de.ATTORNEY as "attorney",
+		de.STATUS as "attorneyStatus"
+		,HI.FORM_KEY_ AS "formKey"
+	FROM act_hi_taskinst HI
+	JOIN ACT_HI_PROCINST PRO on hi.proc_inst_id_ = PRO.id_
+	JOIN ACT_RE_PROCDEF PD ON PD.ID_ = PRO.PROC_DEF_ID_
+	left  join act_hi_delegate de on de.TASK_ID = HI.ID_
+	WHERE HI.ASSIGNEE_ = #{userId}
+	or HI.OWNER_ = #{userId}
+	or de.ATTORNEY = #{userId}
+	order by hi.END_TIME_ desc
+	</select>
+	
+	<resultMap type="com.activiti.base.entity.ProcInst" id="ProcInstMap">
+		<result column="procInstId" property="procInstId"/>
+		<result column="businessKey" property="businessKey"/>
+		<result column="processDefId" property="processDefId"/>
+		<result column="name" property="name"/>
+		<result column="startTime" property="startTime"/>
+		<result column="endTime" property="endTime"/>
+		<result column="startUserId" property="startUserId"/>
+		<result column="startActId" property="startActId"/>
+		<result column="endActId" property="endActId"/>
+		<result column="deleteReason" property="deleteReason"/>
+		<collection property="nodes" ofType="com.activiti.base.entity.Node" select="getTask" column="procInstId">
+			<!-- <result column="taskName" property="name"/>
+			<result column="taskDefKey" property="id"/> -->
+		</collection>
+	</resultMap>
+	
+	<select id="getTask" parameterType="java.lang.String" resultType="com.activiti.base.entity.Node">
+		SELECT task.name_ as "name",
+	 		task.task_def_key_ as "id" from act_ru_task task
+	 		where task.PROC_INST_ID_ = #{procInstId}
+	</select>
+	
+	<select id="queryHiTaskStartByPage" parameterType="java.lang.String" resultMap="ProcInstMap">
+	 SELECT DISTINCT
+		PRO.ID_ AS "procInstId",
+		PRO.BUSINESS_KEY_ AS "businessKey",
+		PRO.PROC_DEF_ID_ AS "processDefId",
+		rp.NAME_ AS "name",
+		PRO.START_TIME_ AS "startTime",
+		PRO.END_TIME_ AS "endTime",
+		PRO.START_USER_ID_ AS "startUserId",
+		PRO.START_ACT_ID_ AS "startActId",
+		PRO.END_ACT_ID_ AS "endActId",
+		PRO.DELETE_REASON_ AS "deleteReason"
+	 FROM act_hi_procinst PRO
+	 	join act_re_procdef rp on PRO.PROC_DEF_ID_ = rp.ID_
+		JOIN act_hi_taskinst task on task.PROC_INST_ID_ = PRO.id_
+	 WHERE PRO.START_USER_ID_ = #{userId} and pro.BUSINESS_KEY_ is not null order by PRO.START_TIME_ DESC
+	</select>
+	
+	<select id="queryHiTaskFiledByPage" parameterType="java.lang.String" resultType="com.activiti.base.entity.ITaskInst">
+		SELECT
+	 		DISTINCT
+		PRO.ID_ AS "id",
+		PRO.PROC_DEF_ID_ AS "processDefId",
+		PRO.NAME_ AS "taskName",
+		PRO.START_TIME_ AS "startTime",
+		PRO.END_TIME_ AS "endTime"
+	 FROM
+		act_hi_procinst PRO WHERE PRO.START_USER_ID_ IS NOT NULL AND PRO.START_USER_ID_ = #{userId}
+		AND PRO.END_TIME_ IS NOT NULL
+	</select>
+	
+	<select id="queryHiTaskCancelByPage" parameterType="java.lang.String" resultType="com.activiti.base.entity.ITaskInst">
+	SELECT
+	 DISTINCT
+		PRO.ID_ AS "id",
+		PRO.PROC_DEF_ID_ AS "processDefId",
+		PRO.NAME_ AS "taskName",
+		PRO.START_TIME_ AS "startTime",
+		PRO.END_TIME_ AS "endTime",
+		PRO.DELETE_REASON_ AS "deleteReason"
+	FROM
+		act_hi_procinst PRO WHERE PRO.START_USER_ID_ IS NOT NULL
+		 AND PRO.END_TIME_ IS NOT NULL 
+		 AND PRO.DELETE_REASON_ IS NOT NULL
+		 AND PRO.START_USER_ID_ = #{userId}
+	</select>
+	
+	<insert id="insertFootpoint" parameterType="java.lang.String">
+		INSERT INTO act_footpoint(task_id,result,result_desc) VALUES(#{taskId},#{result},#{resultDesc})
+	</insert>
+
+
+	<resultMap type="com.activiti.base.entity.ITask" id="ITaskMap">
+		<result column="procInstId" property="procInstId"/>
+		<result column="modelName" property="modelName"/>
+		<result column="activityId" property="activityId"/>
+		<result column="processDefKey" property="processDefKey"/>
+		<result column="formKey" property="formKey"/>
+		<result column="deploymentId" property="deploymentId"/>
+		<result column="activityName" property="activityName"/>
+		<result column="startTime" property="startTime"/>
+		<result column="state" property="state"/>
+		<result column="processDefId" property="processDefId"/>
+		<result column="bussinessKey" property="bussinessKey"/>
+		<result column="taskId" property="taskId"/>
+		<result column="assignee" property="assignee"/>
+		<result column="startUserId" property="startUserId"/>
+		<result column="owner" property="owner"/>
+		<result column="attorney" property="attorney"/>
+		<result column="delegater" property="delegater"/>
+		<result column="delegateId" property="delegateId"/>
+		<collection property="delegates" ofType="com.activiti.base.entity.DelegateInfo">
+			<result column="attorney" property="attorney"/>
+			<result column="attorneyStatus" property="status"/>
+		</collection>
+	</resultMap>
+
+	<select id="queryRuTask" parameterType="java.util.Map" resultMap="ITaskMap">
+		select * from (
+			select DISTINCT
+				RES.PROC_INST_ID_ AS "procInstId",
+				PROC.NAME_ AS "modelName",
+				RES.TASK_DEF_KEY_ AS "activityId",
+				PROC.KEY_ AS "processDefKey",
+				PROC.DEPLOYMENT_ID_ AS "deploymentId",
+				RES.NAME_ AS "activityName",
+				RES.CREATE_TIME_ AS "startTime",
+				'运行' AS "state",
+				PROC.ID_ AS "processDefId",
+				HI.BUSINESS_KEY_ AS "bussinessKey",
+				RES.ID_ AS "taskId",
+				RES.ASSIGNEE_ AS "assignee",
+				hi.START_USER_ID_ as "startUserId",
+				RES.OWNER_ as "owner",
+				'' as "delegateId",
+				'' as "delegater",
+				"" as "attorney",
+				"" as "attorneyStatus",
+				1 as "orderBy",
+				RES.FORM_KEY_ AS "formKey"
+			FROM ACT_RU_TASK RES
+			JOIN ACT_RU_IDENTITYLINK I ON I.TASK_ID_ = RES.ID_
+			JOIN ACT_HI_PROCINST HI ON res.PROC_INST_ID_ = HI.proc_inst_id_
+			JOIN ACT_RE_PROCDEF PROC ON RES.PROC_DEF_ID_ = PROC.ID_
+			WHERE RES.ASSIGNEE_ = #{userId}
+			or RES.OWNER_ = #{userId}
+			OR (
+				RES.ASSIGNEE_ IS NULL
+				AND I.TYPE_ = 'candidate'
+				AND (
+				I.USER_ID_ IN (#{userId}<foreach collection="roleId" item="role" separator="," open=",">
+				#{role}</foreach>)
+				)
+			)
+			AND HI.BUSINESS_KEY_ is not null
+
+		<if test="userRoles != null and userRoles.size() > 0">
+			UNION
+			SELECT
+				RES.PROC_INST_ID_ AS "procInstId",
+				PROC.NAME_ AS "modelName",
+				RES.TASK_DEF_KEY_ AS "activityId",
+				PROC.KEY_ AS "processDefKey",
+				PROC.DEPLOYMENT_ID_ AS "deploymentId",
+				RES.NAME_ AS "activityName",
+				RES.CREATE_TIME_ AS "startTime",
+				'运行' AS "state",
+				PROC.ID_ AS "processDefId",
+				HI.BUSINESS_KEY_ AS "bussinessKey",
+				RES.ID_ AS "taskId",
+				RES.ASSIGNEE_ AS "assignee",
+				hi.START_USER_ID_ as "startUserId",
+				"" as "owner",
+				de.id as "delegateId",
+				de.assignee as "delegater",
+				de.ATTORNEY as "attorney",
+				de.STATUS as "attorneyStatus",
+				2 as "orderBy",
+				RES.FORM_KEY_ AS "formKey"
+			FROM act_ru_task RES
+			LEFT JOIN act_ru_identitylink i ON RES.id_ = i.TASK_ID_
+			JOIN ACT_HI_PROCINST HI ON res.PROC_INST_ID_ = HI.proc_inst_id_
+			JOIN ACT_RE_PROCDEF PROC ON RES.PROC_DEF_ID_ = PROC.ID_
+			JOIN act_ru_delegate de ON (RES.proc_def_id_ = de.PROCESS_DEFINITION_ID AND de.ACTIVITY_ID = RES.task_def_key_)
+			LEFT JOIN (
+				<foreach collection="userRoles" item="item" separator="union">
+					SELECT #{item.user_id} AS "userId",#{item.role_id} AS "roleId" FROM DUAL
+				</foreach>
+			) A ON de.ASSIGNEE = A.userId
+			LEFT JOIN ACT_RU_VARIABLE VARI ON HI.proc_inst_id_ = VARI.proc_inst_id_
+			WHERE de.ATTORNEY = #{userId}
+			AND now() BETWEEN de.START_TIME AND de.END_TIME
+			AND (I.USER_ID_ IN (a.userId) OR I.USER_ID_ IN (A.roleId))
+			AND PROC.KEY_ = #{processDefKey}
+			<if test="ruleList != null and ruleList.size()">
+				AND (DE.ID NOT IN (<foreach collection="ruleList" item="item" separator=",">
+					#{item.delegateInfoId}
+				</foreach>) OR <foreach collection="ruleList" item="item" separator=" or ">
+					(de.ID = #{item.delegateInfoId} and <foreach collection="item.ruleList" item="rule" separator=" and ">
+						vari.<if test="rule.ruleType == 'long'">long_ ${rule.ruleOperator} CAST(#{rule.ruleValue} AS signed)</if> 
+					</foreach>)
+				</foreach>)
+			</if>
+		  ORDER BY orderBy
+		</if>
+		) t
+		GROUP BY t.taskId
+		ORDER BY t.startTime DESC
+    </select>
+	
+	<select id="queryFootMarkInfo" parameterType="java.lang.String" resultType="com.activiti.base.entity.ITaskInst">
+		SELECT
+		DISTINCT
+			HI.ID_ AS "id",
+			HI.NAME_ AS "taskName",
+			HI.ASSIGNEE_ AS "assignee",
+			HI.START_TIME_ AS "startTime",
+			HI.END_TIME_ AS "endTime",
+			FP.RESULT AS "taskResult",
+			FP.RESULT_desc AS "taskResultDesc",
+			D.attorney as "attorney",
+			HI.TASK_DEF_KEY_ AS "activityId"
+		<!-- ,SEC_TO_TIME(TIMESTAMPDIFF(SECOND,HI.START_TIME_,DATE_FORMAT(HI.END_TIME_,'%Y-%m-%d %H:%i:%s'))) AS 'hisTaskTime' -->
+		FROM
+		ACT_HI_TASKINST HI LEFT JOIN ACT_FOOTPOINT FP ON FP.TASK_ID = HI.ID_
+		LEFT JOIN ACT_HI_DELEGATE D ON HI.ID_ = D.TASK_ID
+		WHERE HI.PROC_INST_ID_ = #{procInstId} order by HI.START_TIME_ desc
+	</select>
+	
+	<select id="getAssigneeByUserId" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT d.ASSIGNEE
+		FROM act_ru_delegate d WHERE d.ATTORNEY = #{userId}
+	</select>
+	
+	
+	<!-- 委托流转记录 -->
+	<insert id="complateDelegate" parameterType="java.lang.String">
+		INSERT INTO ACT_HI_DELEGATE (
+			ID,
+			ASSIGNEE,
+			ATTORNEY,
+			DELEGATE_TIME,
+			TASK_ID,
+			DELEGATE_ID
+		)VALUES(
+			#{id},
+			#{assignee},
+			#{userId},
+			now(),
+			#{taskId},
+			#{delegateId}
+		)
+	</insert>
+	
+	<!-- 新增委托 -->
+	<insert id="addDelegate" parameterType="com.activiti.base.entity.DelegateInfo">
+		INSERT INTO ACT_RU_DELEGATE (
+			ID,
+			ASSIGNEE,
+			ATTORNEY,
+			START_TIME,
+			END_TIME,
+			PROCESS_DEFINITION_ID,
+			ACTIVITY_ID,
+			DEL_FLAG
+		) VALUES(
+			#{delegateInfoId},
+			#{assignee},
+			#{attorney},
+			#{startTime},
+			#{endTime},
+			#{processDefId},
+			#{activityId},
+			'0'
+		)
+	</insert>
+	
+	<!-- 查询委托记录列表 -->
+	<select id="queryDelegateInfoList" parameterType="java.lang.String" resultType="com.activiti.base.entity.DelegateInfo">
+		SELECT id as "delegateInfoId",
+			assignee,
+			attorney,
+			start_time as "startTime",
+			end_time as "endTime",
+			process_definition_id as "proDefId",
+			activity_id as "activityId",
+			status,
+			process_name AS "processName",
+			activity_name as "activityName"
+		from act_ru_delegate
+			where del_flag = '0' and assignee = #{userId}
+	</select>
+	
+	<!-- 根据委托记录id删除委托记录 -->
+	<update id="deleDelegate" parameterType="java.lang.String">
+		UPDATE ACT_RU_DELEGATE SET DEL_FLAG = '1' WHERE ID = #{delegateId}
+	</update>
+	
+	<!-- 获取最近历史活动code -->
+	<select id="queryLastActivityCode" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT task_def_key_ from 
+			act_hi_taskinst A where A.PROC_INST_ID_ = #{processInstId}
+			and end_time_ is not null order by end_time_ desc limit 1
+	</select>
+	
+	<!-- 批量新增委托规则 -->
+	<select id="addDelegateRule">
+		INSERT INTO	ACT_RU_DELEGATE_RULE (
+			ID,RULE_KEY,RULE_TYPE,RULE_VALUE,
+			RULE_OPERATOR,RULE_NAME,DELEGATE_ID
+		)VALUES <foreach collection="list" item="rule" separator=",">
+			(
+			#{rule.ruleId},#{rule.ruleKey},#{rule.ruleType},#{rule.ruleValue},
+			#{rule.ruleOperator},#{rule.ruleName},#{rule.delegateId}
+			)
+		</foreach>
+	</select>
+	
+	<!-- 删除委托记录下的委托规则 -->
+	<delete id="deleteDelegateRule" parameterType="java.lang.String">
+		DELETE FROM ACT_RU_DELEGATE_RULE WHERE DELEGATE_ID = #{delegateId}
+	</delete>
+
+	<delete id="deleteDelegate" parameterType="java.lang.String">
+		DELETE FROM ACT_RU_DELEGATE WHERE ID = #{delegateId}
+	</delete>
+	
+	<!-- 查询委托记录下委托规则列表 -->
+	<select id="queryHaveDelegateRuleList" parameterType="java.lang.String" resultType="com.activiti.base.entity.DelegateRule">
+		SELECT ID AS "ruleId",
+			rule_key as "ruleKey",
+			rule_type as "ruleType",
+			rule_value as "ruleValue",
+			rule_operator as "ruleOperatoe",
+			rule_name as "ruleName",
+			delegate_id as "delegateId"
+			from act_ru_delegate_rule where delegate_id = #{delegateId}
+	</select>
+	
+	<resultMap type="com.activiti.base.entity.DelegateInfo" id="delegateMap">
+		<result column="ID" property="delegateInfoId"/>
+		<result column="ASSIGNEE" property="assignee"/>
+		<result column="PROCESS_DEFINITION_ID" property="processDefId"/>
+		<result column="ACTIVITY_ID" property="activityId"/>
+		<collection property="ruleList" ofType="com.activiti.base.entity.DelegateRule">
+		<result column="RULE_KEY" property="ruleKey"/>
+		<result column="RULE_OPERATOR" property="ruleOperator"/>
+		<result column="RULE_VALUE" property="ruleValue"/>
+		<result column="rule_type" property="ruleType"/>
+		</collection>
+	</resultMap>
+	
+	<select id="queryDelegateUserInfo" parameterType="java.lang.String" resultMap="delegateMap">
+		SELECT
+		de.ID,
+		de.ASSIGNEE,
+		de.PROCESS_DEFINITION_ID,
+		de.ACTIVITY_ID,
+		der.RULE_KEY,
+		der.RULE_OPERATOR,
+		der.RULE_VALUE,
+		der.rule_type
+	FROM
+		act_ru_delegate de
+	JOIN act_ru_delegate_rule der ON de.ID = der.DELEGATE_ID
+		where de.DEL_FLAG = 0 AND now() BETWEEN de.START_TIME AND de.END_TIME
+		and de.ATTORNEY = #{userId}
+	</select>
+	
+</mapper>

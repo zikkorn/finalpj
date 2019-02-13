@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.activiti.mapper.ModelMapper" >
+
+    <select id="getProcessStarter" resultType="com.activiti.base.entity.IProcess" parameterType="java.lang.String">
+        select
+          t1.USER_ID_ AS "userIds",
+          t1.PROC_DEF_ID_ AS "id",
+          t2.NAME_ AS "name",
+          t2.KEY_ AS "key",
+          t2.VERSION_ AS "version",
+          t3.DEPLOY_TIME_ AS "updateTime"
+        from ACT_RU_IDENTITYLINK t1
+          LEFT JOIN (select a.* from act_re_procdef a where not exists(select 1 from act_re_procdef where key_ = a.key_ and version_ > a.version_)) t2 ON t1.PROC_DEF_ID_ = t2.ID_
+          LEFT JOIN act_re_deployment t3 ON t2.DEPLOYMENT_ID_ = t3.ID_
+        where t2.KEY_ IS NOT NULL
+        <if test="processDefId != null and processDefId != ''.toString()">
+            AND t1.PROC_DEF_ID_ = #{processDefId}
+        </if>
+        <if test="processDefId == null or processDefId == ''.toString()">
+            AND t1.PROC_DEF_ID_ IS NOT NULL
+        </if>
+    </select>
+
+    <select id="getProcessStarterCount" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(1) from ACT_RU_IDENTITYLINK where PROC_DEF_ID_ = #{processDefId}
+    </select>
+
+    <insert id="insertProcessStarter" parameterType="java.lang.String">
+        INSERT INTO ACT_RU_IDENTITYLINK(ID_,GROUP_ID_,USER_ID_,PROC_DEF_ID_,TYPE_)
+        VALUES (#{id},#{groupIds},#{userIds},#{processDefId},'candidate')
+    </insert>
+
+    <update id="updateProcessStarter" parameterType="java.lang.String">
+        UPDATE ACT_RU_IDENTITYLINK SET GROUP_ID_=#{groupIds},USER_ID_=#{userIds} WHERE PROC_DEF_ID_=#{processDefId}
+    </update>
+
+    <select id="findModelByPage" resultType="com.activiti.base.entity.RepositoryModel" parameterType="java.lang.String">
+        SELECT
+            DATE_FORMAT(a.CREATE_TIME_,"%Y-%m-%d %H:%i:%S") AS "createTime",
+            DATE_FORMAT(a.LAST_UPDATE_TIME_,"%Y-%m-%d %H:%i:%S") AS "lastUpdateTime",
+            a.id_ AS "id",
+            a.name_ AS "name",
+            a.key_ AS "key",
+            a.meta_info_ AS "metaInfo",
+            c. NAME AS "typeName"
+        FROM	act_re_model a
+        JOIN catalog_model b ON a.id_ = b.model_id
+        JOIN catalog c ON c.id = b.catalog_id
+        ORDER by a.LAST_UPDATE_TIME_ desc
+    </select>
+
+    <!--分页查询用户或者角色可启动流程-->
+    <select id="getStartupProcess" resultType="com.activiti.base.entity.IProcess" parameterType="java.lang.String">
+        select
+        c.name AS "processCatalog",
+        t1.USER_ID_ AS "userIds",
+        t1.PROC_DEF_ID_ AS "id",
+        t2.NAME_ AS "name",
+        t2.KEY_ AS "key",
+        t2.VERSION_ AS "version",
+        t3.DEPLOY_TIME_ AS "updateTime"
+        from ACT_RU_IDENTITYLINK t1
+        LEFT JOIN (select a.* from act_re_procdef a where not exists(select 1 from act_re_procdef where key_ = a.key_ and version_ > a.version_)) t2 ON t1.PROC_DEF_ID_ = t2.ID_
+        LEFT JOIN act_re_deployment t3 ON t2.DEPLOYMENT_ID_ = t3.ID_
+        LEFT join act_re_procdef pd on t3.id_ = pd.DEPLOYMENT_ID_
+		LEFT join act_re_model m on pd.KEY_ = m.key_
+		LEFT join catalog_model cm on m.id_ = cm.model_id
+		LEFT join catalog c on cm.catalog_id = c.id
+        where t2.KEY_ IS NOT NULL
+            AND t1.PROC_DEF_ID_ IS NOT NULL
+        <if test="userId != null or userId != ''.toString()">
+            AND t1.USER_ID_ LIKE CONCAT('%', #{userId}, '%')
+        </if>
+    </select>
+    
+    <!-- 分页获取所有流程定义集合 -->
+    <select id="queryProcessDefListByPage" resultType="com.activiti.base.entity.IProcess">
+	SELECT p.id_ as "id",p.name_ as "name",c.name as
+	"processCatalog",p.version_ as
+	"version",DATE_FORMAT(d.deploy_time_,'%Y-%d-%m %k:%i:%s') as
+	"deployTime",p.SUSPENSION_STATE_ as "state" from act_re_model m
+	join(select a.* from act_re_procdef a where not exists(select 1 from
+	act_re_procdef where key_ = a.key_ and version_ > a.version_)) p
+	on
+	p.key_ = m.key_ join act_re_deployment d on
+	p.deployment_id_ = d.id_
+	join catalog_model cm on m.id_ = cm.model_id
+	join catalog c on c.id =
+	cm.catalog_id ORDER BY d.deploy_time_ desc
+    </select>
+    
+    <!-- 获取所有已激活流程定义集合 -->
+    <select id="queryProcessDefUsedList" resultType="com.activiti.base.entity.IProcess">
+	SELECT p.id_ as "id",p.name_ as "name",c.name as
+	"processCatalog",p.version_ as
+	"version",DATE_FORMAT(d.deploy_time_,'%Y-%d-%m %k:%i:%s') as
+	"deployTime",p.SUSPENSION_STATE_ as "state" from act_re_model m
+	join(select a.* from act_re_procdef a where not exists(select 1 from
+	act_re_procdef where key_ = a.key_ and version_ > a.version_)) p
+	on
+	p.key_ = m.key_ join act_re_deployment d on
+	p.deployment_id_ = d.id_
+	join catalog_model cm on m.id_ = cm.model_id
+	join catalog c on c.id =
+	cm.catalog_id where p.SUSPENSION_STATE_ = 1 ORDER BY d.deploy_time_ desc
+    </select>
+</mapper>

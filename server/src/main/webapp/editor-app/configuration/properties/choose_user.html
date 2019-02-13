@@ -1,0 +1,61 @@
+<div class="modal" ng-controller="chooseUserCtrl">
+    <div style="width: 800px; margin: 30px auto;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="close()">&times;</button>
+                <h2 translate>PROPERTY.ASSIGNMENT.TITLE</h2>
+            </div>
+            <div class="modal-body">
+                <div id="tree" class="ztree"></div>
+            </div>
+            <div class="modal-footer">
+                <!--<button ng-click="close()" class="btn btn-primary" translate>ACTION.CANCEL</button>-->
+                <button ng-click="saveUser()" class="btn btn-primary" translate>ACTION.SAVE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+	//接口地址
+	var initUrl = 'http://localhost:8081/activiti';
+
+   setting = {
+        check: {
+            enable: true, //每个节点上是否显示 CheckBox
+            chkStyle: "checkbox", //复选框类型
+            chkboxType: { "Y" : "", "N" : "" }
+        },
+        data: {
+            simpleData: {
+                enable: true,
+                idKey:"id",
+                pIdKey:"pId",
+                rootPId:0
+            },
+            key:{
+                name:"name"
+            }
+        }
+    };
+	/* zNodes  =[
+        { id:"a1", pId:"z0", name:"人事部",type:"group"},
+        { id:"b11", pId:"a1", name:"张三",type:"user"},
+        { id:"c111", pId:"a1", name:"李四",type:"user"},
+        { id:"d2", pId:"z0", name:"技术部",type:"group"},
+        { id:"e21", pId:"d2", name:"王二",type:"user"},
+        { id:"f211", pId:"d2", name:"狗蛋",type:"user"}
+    ];  
+	jQuery.fn.zTree.init(jQuery("#tree"), setting, zNodes); */
+   
+   	//调用后台
+    jQuery.ajax({
+  	  type: 'POST',
+  	  url: initUrl + '/user/getUsers',//发送请求
+  	  dataType : "json",
+  	  success: function(result) {
+  		  var htmlCont = result.data;//返回的结果页面
+  		  jQuery.fn.zTree.init(jQuery("#tree"), setting, htmlCont);
+  	  }
+  	});  
+</script>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.activiti.mapper.CatalogMapper" >
+
+    <insert id="addCatalog"  parameterType="com.activiti.base.entity.Catalog">
+        INSERT into CATALOG (id,name,parent_id,depict) VALUES (#{id},#{name},#{parentId},#{depict})
+    </insert>
+
+    <update id="updateCatalog" parameterType="com.activiti.base.entity.Catalog">
+        UPDATE CATALOG SET name=#{name},parent_id=#{parentId},depict=#{depict} WHERE id=#{id}
+    </update>
+
+    <delete id="deleteCatalog" parameterType="com.activiti.base.entity.Catalog">
+        delete from CATALOG where id =#{id}
+    </delete>
+
+    <select id="findList" resultType="com.activiti.base.entity.Catalog" parameterType="com.activiti.base.entity.Catalog">
+        select a.id AS "id",
+        a.name AS "name",
+        a.parent_id AS "parentId",
+        a.depict AS "depict"
+        from CATALOG a
+    </select>
+
+    <insert id="addCatalogModel" parameterType="java.lang.String">
+        INSERT  INTO  catalog_model (id,catalog_id,model_id) values (#{id},#{catalogId},#{modelId})
+    </insert>
+
+    <delete id="deleteCatalogModel" parameterType="java.lang.String">
+        delete from catalog_model where model_id = #{0}
+    </delete>
+
+
+    <!-- 分页查询目录列表-->
+    <select id="findListByPage" resultType="com.activiti.base.entity.Catalog" parameterType="com.activiti.base.entity.Catalog">
+        select a.id AS "id",
+        a.name AS "name",
+        a.parent_id AS "parentId",
+        a.depict AS "depict"
+        from CATALOG a where 1=1
+        <if test="name != null and name != ''.toString()">
+            AND a.name like CONCAT('%', #{name}, '%')
+        </if>
+    </select>
+</mapper>

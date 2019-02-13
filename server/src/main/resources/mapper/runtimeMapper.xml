@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.activiti.mapper.RuntimeMapper" >
+
+	<!-- 设置业务id -->
+	<update id="setBusinessKey">
+		update act_hi_procinst hi set hi.BUSINESS_KEY_ = #{buzId} 
+			where hi.ID_ = #{procInstId}
+	</update>
+
+</mapper>

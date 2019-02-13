@@ -1,0 +1,250 @@
+.main-body {
+	min-width: 320px;
+}
+
+
+/*----头部区域----*/
+
+
+/*logo部分*/
+
+.logo {
+	float: left;
+	width: auto;
+	min-width: 200px;
+	height: 60px;
+	text-align: center;
+	line-height: 60px;
+	color: #fff;
+	padding: 0 25px;
+	box-sizing: border-box;
+}
+
+.logo a h1 {
+	color: #fff;
+	font-size: 2rem;
+}
+
+.logo a h1:hover {
+	color: #ccc;
+	transition: all .5s;
+}
+
+
+/*侧边显示/隐藏按钮*/
+
+.side-btn {
+	float: left;
+	width: 30px;
+	height: 30px;
+	text-align: center;
+	line-height: 30px;
+	font-family: "seraph" !important;
+	margin-top: 15px;
+	background-color: #1AA094;
+}
+
+.side-btn a {
+	display: inline-block;
+	width: 30px;
+	height: 30px;
+	color: #fff;
+}
+
+
+/*头部右侧导航*/
+
+.right-nav {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.layui-nav-item .layui-badge-dot {
+	position: absolute;
+	top: 50%;
+}
+
+
+/*----左侧导航区域----*/
+
+.layui-layout-admin .layui-side {
+	left: 0;
+	overflow: hidden;
+}
+
+.layui-nav {
+	background-color: inherit !important;
+}
+
+.showMenu.layui-layout-admin .layui-side {
+	left: -200px;
+}
+
+.showMenu .layui-body,
+.showMenu .layui-footer {
+	left: 0;
+}
+
+.layui-nav-child dd {
+	cursor: pointer;
+}
+
+
+/*头像*/
+
+.user-photo {
+	width: 200px;
+	height: 140px;
+	margin: 15px 0 5px;
+}
+
+.user-photo .img {
+	display: block;
+	width: 80px;
+	height: 80px;
+	margin: 0 auto 10px;
+}
+
+.user-photo .img .userAvatar {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border: 4px solid #44576b;
+	box-sizing: border-box;
+}
+
+.user-photo .userName {
+	width: 100%;
+	height: 25px;
+	text-align: center;
+	line-height: 25px;
+	color: #fff;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+
+/*----内容主题区域----*/
+
+.layui-body {
+	overflow: hidden;
+	background-color: #fff;
+	border-top: 5px solid #1AA094;
+	border-left: 2px solid #1AA094;
+}
+
+#top_tabs_box {
+	padding-right: 138px;
+	height: 40px;
+	border-bottom: 1px solid #e2e2e2;
+}
+
+#top_tabs {
+	position: absolute;
+	border-bottom: none;
+}
+
+.layui-tab-title .layui-this {
+	background-color: #1AA094;
+	color: #fff;
+}
+
+.layui-tab-title .layui-this:after {
+	border: none;
+}
+
+.layui-tab-title li cite {
+	font-style: normal;
+	padding-left: 5px;
+}
+
+.clildFrame.layui-tab-content {
+	top: 41px;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	padding: 0;
+}
+
+iframe {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	border: none;
+}
+
+
+/*页面操作*/
+
+.closeBox {
+	position: absolute;
+	right: 0;
+	background-color: #fff !important;
+	color: #000;
+	border-left: 1px solid #e2e2e2;
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.closeBox .layui-nav-item {
+	line-height: 40px;
+}
+
+.closeBox .layui-nav-item>a,
+.closeBox .layui-nav-item>a:hover {
+	color: #000;
+}
+
+.closeBox .layui-nav-child {
+	top: 42px;
+	left: -12px;
+}
+
+.closeBox .layui-nav-bar {
+	display: none;
+}
+
+.closeBox a i.caozuo {
+	font-size: 20px;
+	position: absolute;
+	top: 1px;
+	left: 0;
+}
+
+.closeBox a span.layui-nav-more {
+	border-color: #333 transparent transparent;
+}
+
+.closeBox a span.layui-nav-more.layui-nav-mored {
+	border-color: transparent transparent #333;
+}
+
+
+/*----底部区域----*/
+
+.layui-footer p {
+	text-align: center;
+}
+
+.layui-footer p span {
+	margin-right: 15px;
+}
+
+
+/*----样式改变的过度----*/
+
+.layui-body,
+.layui-footer,
+.layui-layout-admin .layui-side,
+.logo,
+.topLevelMenus li.layui-nav-item,
+.topLevelMenus li.layui-nav-item:hover {
+	transition: all 0.3s ease-in-out;
+	-webkit-transition: all 0.3s ease-in-out;
+	-o-transition: all 0.3s ease-in-out;
+	-moz-transition: all 0.3s ease-in-out;
+	-ms-transition: all 0.3s ease-in-out;
+}
